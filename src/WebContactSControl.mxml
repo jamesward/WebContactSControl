@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:flexforforce="http://flexforforce.salesforce.com">
+
+	<fx:Script>		
+		import mx.rpc.AsyncResponder;
+		import mx.utils.Base64Decoder;
+	</fx:Script>
+
+	<fx:Declarations>
+		<flexforforce:F3WebApplication id="app" requiredTypes="Contact">
+			<flexforforce:loginComplete>
+				app.wrapper.query("select photoData__c from Contact where Id = '" + this.parameters.contactId + "'", new AsyncResponder(function(data:Object, token:Object):void {
+					if (data.length == 1)
+					{
+						if (data[0].photoData__c == null)
+						{
+							photo.visible = false;
+							noPhoto.visible = true;
+							return;
+						}
+				
+						var decoder:Base64Decoder = new Base64Decoder();
+						decoder.decode(data[0].photoData__c);
+						
+						var loader:Loader = new Loader();
+						loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(event:Event):void {
+							photo.source = event.target.content;
+							photo.visible = true;
+						});
+						loader.loadBytes(decoder.toByteArray());
+					}
+				}, function(fault:Object):void {
+					// ignored
+				}));
+			</flexforforce:loginComplete>
+		</flexforforce:F3WebApplication>
+	</fx:Declarations>
+
+	<s:applicationComplete>
+		app.serverUrl = this.parameters.serverUrl;
+		app.loginBySessionId(this.parameters.sessionId);
+	</s:applicationComplete>
+	
+	<s:Rect width="92" height="92">
+		<s:fill>
+			<s:SolidColor color="#cccccc"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:Label id="noPhoto" text="No Photo" width="92" height="92" textAlign="center" verticalAlign="middle" visible="false"/>
+	
+	<s:BitmapImage id="photo" width="92" height="92"/>
+
+</s:Application>
